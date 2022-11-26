@@ -35,28 +35,64 @@ function verifyJWT(req, res, next) {
       return res.status(401).send({ message: "unauthorized access" });
     }
     const token = authHeader.split(" ")[1];
-
     jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, function (err, decoded) {
       if (err) {
         return res.status(403).send({ message: "Forbidden access" });
       }
-
+console.log("decoded",decoded);
       req.decoded = decoded;
-      next();
+      
     });
+
+    next();
   }
 
 
 
-  app.post("/jwt", (req, res) => {
+
+    const verifyAdmin = async (req, res, next) => {
+      const email = req.decoded.email;   
+      console.log("HAAH ADMIN HAHA" ,email);
+      const query = {email };
+      const user = await ALLUSER.findOne(query);
+      if (user?.role !== 'admin') {
+          return res.status(403).send({ message: 'forbidden access' })
+      }
+      next();
+  }
+    const verifySeller = async (req, res, next) => {
+      const email = req.decoded.email;   
+      console.log("SELLER" ,email);
+      const query = {email };
+      const user = await ALLUSER.findOne(query);
+      if (user?.role !== 'seller') {
+          return res.status(403).send({ message: 'forbidden access' })
+      }
+      next();
+  }
+    const verifyBuyer = async (req, res, next) => {
+      const email = req.decoded.email;   
+      console.log("BUYER" ,email);
+      const query = {email };
+      const user = await ALLUSER.findOne(query);
+      if (user?.role !== 'buyer') {
+          return res.status(403).send({ message: 'forbidden access' })
+      }
+      next();
+  }
+
+
+
+
+
+  
+app.post("/jwt", (req, res) => {
     const user = req.body;
     const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
       expiresIn: "1d",
     });
     res.send({ token });
-  });
-
-  
+});
 app.post("/adduser", async (req, res) => {
   try {
     const result = await ALLUSER.insertOne(req.body);
@@ -79,7 +115,6 @@ app.post("/adduser", async (req, res) => {
     });
   }
 });
-
 app.post("/addbike", async (req, res) => {
   try {
     const result = await BIKE.insertOne(req.body);
@@ -103,14 +138,11 @@ app.post("/addbike", async (req, res) => {
     });
   }
 });
-
 app.get("/users", async (req, res) => {
   const { search } = req.query;
   const user = await ALLUSER.find({ email: search }).toArray();
   res.send(user);
 });
-
-
 app.get("/admindata", async (req, res) => {
   const { search } = req.query;
   if(search){
@@ -124,13 +156,11 @@ app.get("/admindata", async (req, res) => {
  
  
 });
-
 app.get("/myproducts", async (req, res) => {
   const { search } = req.query;
   const user = await BIKE.find({ email: search }).toArray();
   res.send(user);
 });
-
 app.get("/category", async (req, res) => {
   const { search } = req.query;
   if (search) {
@@ -142,7 +172,6 @@ app.get("/category", async (req, res) => {
     res.send(category);
   }
 });
-
 app.get("/bikes", async (req, res) => {
   const { search } = req.query;
   if(search){
@@ -152,18 +181,11 @@ app.get("/bikes", async (req, res) => {
   const reported = await BIKE.find({ reported: true }).toArray();
   res.send(reported);
 });
-
-
-
-
-app.get("/myorders", async (req, res) => {
+app.get("/myorders", verifyJWT,verifyBuyer, async (req, res) => {
   const { search } = req.query;
   const MyOrders = await BOOKED.find({ customerEmail: search }).toArray();
   res.send(MyOrders);
 });
-
-
-
 app.get("/advertise", async (req, res) => {
   const advertise = await BIKE.find({ advertise: true }).toArray();
   res.send(advertise);
@@ -176,7 +198,7 @@ app.get("/advertise", async (req, res) => {
 // //....... ..................DELETE start................
 
 
-app.delete("/deleteuser", async (req, res) => {
+app.delete("/deleteuser", verifyJWT, verifyAdmin, async (req, res) => {
   const id = req.query.id;
   const result = await ALLUSER.deleteOne({ _id: ObjectId(id) });
   if (result.deletedCount) {
@@ -192,28 +214,9 @@ app.delete("/deleteuser", async (req, res) => {
   }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-app.delete("/delete", async (req, res) => {
+app.delete("/delete",verifyJWT, async (req, res) => {
   const id = req.query.id;
-
   const result = await BIKE.deleteOne({ _id: ObjectId(id) });
-
   if (result.deletedCount) {
     res.send({
       success: true,
@@ -230,9 +233,8 @@ app.delete("/delete", async (req, res) => {
 
 // // ................PATCH  Start...........
 
-app.patch("/updateuserstatus", async (req, res) => {
+app.patch("/report",verifyJWT, async (req, res) => {
     const {id} = req.query
-    const {email} = req.query
     const UpdateData = req.body;
     const filter = {email }
     const updateDoc = {
@@ -258,9 +260,37 @@ app.patch("/updateuserstatus", async (req, res) => {
       });
     }
   });
+app.patch("/updateuserstatus",verifyJWT,verifyAdmin, async (req, res) => {
+    const {id} = req.query
+    const {email} = req.query
+    const UpdateData = req.body;
+    const filter = {email }
+    const updateDoc = {
+      $set: {
+        sellerVerified:true
+      },
+    };
+    const updateUserDB = await ALLUSER.updateOne(
+      { _id: ObjectId(id) },
+      { $set: UpdateData }
+    );
+    const updateBikeDB = await BIKE.updateMany(filter, updateDoc);
+    
+    if (updateBikeDB.matchedCount) {
+      res.send({
+        success: true,
+        message: `successfully updated `,
+      });
+    } else {
+      res.send({
+        success: false,
+        error: "Couldn't update  the product",
+      });
+    }
+  });
 
 
-app.patch("/updatestatus", async (req, res) => {
+app.patch("/updatestatus", verifyJWT, async (req, res) => {
     const {id} = req.query
     const UpdateData = req.body;
 
@@ -310,7 +340,7 @@ app.patch("/updatestatus", async (req, res) => {
 
 //   // ................Patch  Req End...........
 app.get("/", (req, res) => {
-  res.send("WOW");
+  res.send("Server Running ");
 });
 
 app.listen(port, (req, res) => {
