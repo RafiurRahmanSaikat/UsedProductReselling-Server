@@ -22,10 +22,10 @@ const DbConnect = async () => {
 };
 DbConnect();
 
-const ALLUSER = client.db("DreamBike").collection("Users");
-
-const BIKE = client.db("DreamBike").collection("Bikes");
 const CATEGORY = client.db("DreamBike").collection("bikeCategory");
+const ALLUSER = client.db("DreamBike").collection("Users");
+const BIKE = client.db("DreamBike").collection("Bikes");
+const BOOKED = client.db("DreamBike").collection("Booked");
 
 // function verifyJWT(req, res, next) {
 //     const authHeader = req.headers.authorization;
@@ -73,12 +73,10 @@ app.post("/adduser", async (req, res) => {
   }
 });
 
-
 app.post("/addbike", async (req, res) => {
   try {
-    
     const result = await BIKE.insertOne(req.body);
-  
+
     if (result.insertedId) {
       res.send({
         success: true,
@@ -99,87 +97,88 @@ app.post("/addbike", async (req, res) => {
   }
 });
 
-
-
-
-
+app.get("/users", async (req, res) => {
+  const { search } = req.query;
+  const user = await ALLUSER.find({ email: search }).toArray();
+  res.send(user);
+});
+app.get("/myproducts", async (req, res) => {
+  const { search } = req.query;
+  const user = await BIKE.find({ email: search }).toArray();
+  res.send(user);
+});
 
 app.get("/category", async (req, res) => {
   const { search } = req.query;
-  if(search){
-    const category = await CATEGORY.find({"brand":search}).toArray();
-    const bikes = await BIKE.find({"catName":search}).toArray();
-    res.send({category,bikes});
-  }
-  else{
+  if (search) {
+    const category = await CATEGORY.find({ brand: search }).toArray();
+    const bikes = await BIKE.find({ brand: search }).toArray();
+    res.send({ category, bikes });
+  } else {
     const category = await CATEGORY.find({}).toArray();
     res.send(category);
   }
 });
 
-
-
 app.get("/bikes", async (req, res) => {
   const { search } = req.query;
-    const bikes = await BIKE.find({"catName":search}).toArray();
-    console.log("object","Bikes");
-    res.send(bikes);
-  console.log(bikes);
+  const bikes = await BIKE.find({ catName: search }).toArray();
+  res.send(bikes);
 });
 
-
-
-
-
-
-
-
-
-
-
 // //....... ..................DELETE start................
-// app.delete("/delete", async (req, res) => {
-//   const id = req.query.id;
 
-//   const result = await "DB".deleteOne({ _id: ObjectId(id) });
-
-//   if (result.deletedCount) {
-//     res.send({
-//       success: true,
-//       message: `Successfully Deleted `,
-//     });
-//   } else {
-//     res.send({
-//       success: true,
-//       message: `Failed to Delete`,
-//     });
-//   }
-// });
 // // .........................DELETE end............................
 
 // // ................PATCH  Start...........
 
-// app.patch("/update/", async (req, res) => {
-//     const id = req.query.id;
-//     const UpdateData = req.body;
+app.patch("/updatestatus", async (req, res) => {
+    const {id} = req.query
+    const UpdateData = req.body;
 
-//     const result = await'DB'.updateOne(
-//       { _id: ObjectId(id) },
-//       { $set: req.body }
-//     );
-//     if (result.matchedCount) {
-//       res.send({
-//         success: true,
-//         message: `successfully updated `,
-//       });
-//     } else {
-//       res.send({
-//         success: false,
-//         error: "Couldn't update  the product",
-//       });
-//     }
-//     //
-//   });
+    const result = await BIKE.updateOne(
+      { _id: ObjectId(id) },
+      { $set: UpdateData }
+    );
+    
+    if (result.matchedCount) {
+      res.send({
+        success: true,
+        message: `successfully updated `,
+      });
+    } else {
+      res.send({
+        success: false,
+        error: "Couldn't update  the product",
+      });
+    }
+    //
+  });
+
+
+  app.post("/bookbike", async (req, res) => {
+    try {
+      const result = await BOOKED.insertOne(req.body);
+  
+      if (result.insertedId) {
+        res.send({
+          success: true,
+          message: `Successfully Added  with id ${result.insertedId}`,
+        });
+      } else {
+        res.send({
+          success: false,
+          error: "Couldn't Added",
+        });
+      }
+    } catch (error) {
+      console.log(error.name, error.message.bold);
+      res.send({
+        success: false,
+        error: error.message,
+      });
+    }
+  });
 
 //   // ................Patch  Req End...........
 app.get("/", (req, res) => {
