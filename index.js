@@ -138,8 +138,16 @@ app.get("/category", async (req, res) => {
 
 app.get("/bikes", async (req, res) => {
   const { search } = req.query;
-  const bikes = await BIKE.find({ catName: search }).toArray();
-  res.send(bikes);
+  if(search){
+    const bikes = await BIKE.find({ catName: search }).toArray();
+    res.send(bikes);
+
+  }
+  const reported = await BIKE.find({ reported: true }).toArray();
+  res.send(reported);
+ 
+
+
 });
 
 app.get("/myorders", async (req, res) => {
@@ -149,6 +157,41 @@ app.get("/myorders", async (req, res) => {
 });
 
 // //....... ..................DELETE start................
+
+
+app.delete("/deleteuser", async (req, res) => {
+  const id = req.query.id;
+  const result = await ALLUSER.deleteOne({ _id: ObjectId(id) });
+  if (result.deletedCount) {
+    res.send({
+      success: true,
+      message: `Successfully Deleted `,
+    });
+  } else {
+    res.send({
+      success: true,
+      message: `Failed to Delete`,
+    });
+  }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 app.delete("/delete", async (req, res) => {
   const id = req.query.id;
 
@@ -169,6 +212,36 @@ app.delete("/delete", async (req, res) => {
 // // .........................DELETE end............................
 
 // // ................PATCH  Start...........
+
+app.patch("/updateuserstatus", async (req, res) => {
+    const {id} = req.query
+    const {email} = req.query
+    const UpdateData = req.body;
+    const filter = {email }
+    const updateDoc = {
+      $set: {
+        sellerVerified:true
+      },
+    };
+    const updateUserDB = await ALLUSER.updateOne(
+      { _id: ObjectId(id) },
+      { $set: UpdateData }
+    );
+    const updateBikeDB = await BIKE.updateMany(filter, updateDoc);
+    
+    if (updateBikeDB.matchedCount) {
+      res.send({
+        success: true,
+        message: `successfully updated `,
+      });
+    } else {
+      res.send({
+        success: false,
+        error: "Couldn't update  the product",
+      });
+    }
+  });
+
 
 app.patch("/updatestatus", async (req, res) => {
     const {id} = req.query
