@@ -127,7 +127,23 @@ app.get("/bikes", async (req, res) => {
 });
 
 // //....... ..................DELETE start................
+app.delete("/delete", async (req, res) => {
+  const id = req.query.id;
 
+  const result = await BIKE.deleteOne({ _id: ObjectId(id) });
+
+  if (result.deletedCount) {
+    res.send({
+      success: true,
+      message: `Successfully Deleted `,
+    });
+  } else {
+    res.send({
+      success: true,
+      message: `Failed to Delete`,
+    });
+  }
+});
 // // .........................DELETE end............................
 
 // // ................PATCH  Start...........
