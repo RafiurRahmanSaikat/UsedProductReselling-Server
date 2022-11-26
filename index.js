@@ -102,6 +102,22 @@ app.get("/users", async (req, res) => {
   const user = await ALLUSER.find({ email: search }).toArray();
   res.send(user);
 });
+
+
+app.get("/admindata", async (req, res) => {
+  const { search } = req.query;
+  if(search){
+    const user = await ALLUSER.find({ role: search }).toArray();
+    res.send(user);
+  }
+  else{
+    const user = await ALLUSER.find().toArray();
+    res.send(user);
+  }
+ 
+ 
+});
+
 app.get("/myproducts", async (req, res) => {
   const { search } = req.query;
   const user = await BIKE.find({ email: search }).toArray();
@@ -124,6 +140,12 @@ app.get("/bikes", async (req, res) => {
   const { search } = req.query;
   const bikes = await BIKE.find({ catName: search }).toArray();
   res.send(bikes);
+});
+
+app.get("/myorders", async (req, res) => {
+  const { search } = req.query;
+  const MyOrders = await BOOKED.find({ customerEmail: search }).toArray();
+  res.send(MyOrders);
 });
 
 // //....... ..................DELETE start................
