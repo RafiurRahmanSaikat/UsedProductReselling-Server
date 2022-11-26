@@ -141,20 +141,30 @@ app.get("/bikes", async (req, res) => {
   if(search){
     const bikes = await BIKE.find({ catName: search }).toArray();
     res.send(bikes);
-
   }
   const reported = await BIKE.find({ reported: true }).toArray();
   res.send(reported);
- 
-
-
 });
+
+
+
 
 app.get("/myorders", async (req, res) => {
   const { search } = req.query;
   const MyOrders = await BOOKED.find({ customerEmail: search }).toArray();
   res.send(MyOrders);
 });
+
+
+
+app.get("/advertise", async (req, res) => {
+  const advertise = await BIKE.find({ advertise: true }).toArray();
+  res.send(advertise);
+});
+
+
+
+
 
 // //....... ..................DELETE start................
 
@@ -229,7 +239,7 @@ app.patch("/updateuserstatus", async (req, res) => {
     );
     const updateBikeDB = await BIKE.updateMany(filter, updateDoc);
     
-    if (updateBikeDB.matchedCount) {
+    if (result.matchedCount) {
       res.send({
         success: true,
         message: `successfully updated `,
