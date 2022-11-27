@@ -26,6 +26,7 @@ const CATEGORY = client.db("DreamBike").collection("bikeCategory");
 const ALLUSER = client.db("DreamBike").collection("Users");
 const BIKE = client.db("DreamBike").collection("Bikes");
 const BOOKED = client.db("DreamBike").collection("Booked");
+const PAYMENT = client.db("DreamBike").collection("PaymentCollection");
 
 
 
@@ -301,12 +302,10 @@ app.patch("/updatestatus", verifyJWT, async (req, res) => {
 app.patch("/updatebookedstatus", verifyJWT, async (req, res) => {
     const {id} = req.query
     const UpdateData = req.body;
-
     const result = await BOOKED.updateOne(
       { _id: ObjectId(id) },
       { $set: UpdateData }
     );
-    
     if (result.matchedCount) {
       res.send({
         success: true,
@@ -320,6 +319,8 @@ app.patch("/updatebookedstatus", verifyJWT, async (req, res) => {
     }
     //
   });
+
+  
 // .........................PYMENT Intend...................Start.....................
 
 
@@ -359,6 +360,57 @@ app.post("/create-payment-intent", async (req, res) => {
 
 
 // .........................PYMENT Intend...................End.....................
+
+
+
+
+
+
+app.post('/payments',verifyJWT,verifyBuyer, async (req, res) =>{
+  const data = req.body;
+  const result = await PAYMENT.insertOne(data);
+  res.send(result);
+})
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
