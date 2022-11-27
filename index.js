@@ -195,6 +195,17 @@ app.get("/advertise", async (req, res) => {
 
 
 
+// ,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+app.get('/payment/:id',async (req,res)=>{
+  const id=req.params.id
+  // const result = await BOOKED.find({ _id: ObjectId(id) });
+  const result = await BOOKED.find({ _id:  ObjectId(id) }).toArray();
+  console.log(result.data);
+res.send(result)
+})
+
+
+
 // //....... ..................DELETE start................
 
 
@@ -233,33 +244,8 @@ app.delete("/delete",verifyJWT, async (req, res) => {
 
 // // ................PATCH  Start...........
 
-app.patch("/report",verifyJWT, async (req, res) => {
-    const {id} = req.query
-    const UpdateData = req.body;
-    const filter = {email }
-    const updateDoc = {
-      $set: {
-        sellerVerified:true
-      },
-    };
-    const updateUserDB = await ALLUSER.updateOne(
-      { _id: ObjectId(id) },
-      { $set: UpdateData }
-    );
-    const updateBikeDB = await BIKE.updateMany(filter, updateDoc);
-    
-    if (result.matchedCount) {
-      res.send({
-        success: true,
-        message: `successfully updated `,
-      });
-    } else {
-      res.send({
-        success: false,
-        error: "Couldn't update  the product",
-      });
-    }
-  });
+
+
 app.patch("/updateuserstatus",verifyJWT,verifyAdmin, async (req, res) => {
     const {id} = req.query
     const {email} = req.query
@@ -312,8 +298,71 @@ app.patch("/updatestatus", verifyJWT, async (req, res) => {
     }
     //
   });
+app.patch("/updatebookedstatus", verifyJWT, async (req, res) => {
+    const {id} = req.query
+    const UpdateData = req.body;
+
+    const result = await BOOKED.updateOne(
+      { _id: ObjectId(id) },
+      { $set: UpdateData }
+    );
+    
+    if (result.matchedCount) {
+      res.send({
+        success: true,
+        message: `successfully updated `,
+      });
+    } else {
+      res.send({
+        success: false,
+        error: "Couldn't update  the product",
+      });
+    }
+    //
+  });
+// .........................PYMENT Intend...................Start.....................
 
 
+const stripe = require("stripe")(
+  "sk_test_51M6z31Kmdh1q09CFgrA6bPq8HB0u5PIsuQ9PtjCwI0mojBAmVMPhSrkcHfuuzQJ3JwEthnqtvKHBuokHMwkhqSX200ErYpRbRL"
+);
+app.post("/create-payment-intent", async (req, res) => {
+  const price=req.body.price;
+  const amount=price*100;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: amount,
+    currency: "usd",
+    "payment_method_types": [
+      "card"
+    ]
+  });
+
+
+
+  
+  res.send({
+    clientSecret: paymentIntent.client_secret,
+  });
+
+});
+
+
+
+
+
+
+
+
+
+
+
+
+// .........................PYMENT Intend...................End.....................
+
+
+
+  
   app.post("/bookbike", async (req, res) => {
     try {
       const result = await BOOKED.insertOne(req.body);
